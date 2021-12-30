@@ -58,7 +58,7 @@ def forward_propagation(X, hidden_neurons, output_neurons, parameters):
     for i in range(output_neurons):
         B_layer = B_layer.assign(**{f"B{i+1}": np.ones(X.shape[0])})
     for i in range(output_neurons):
-        B_layer[f"B{i+1}"] = sigmoid(sumator(X, ifarray2(parameters['B_weights'], i), ifarray(parameters['B_bias'], i))) 
+        B_layer[f"B{i+1}"] = sigmoid(sumator(A_layer, ifarray2(parameters['B_weights'], i), ifarray(parameters['B_bias'], i))) 
     return B_layer
 
 
