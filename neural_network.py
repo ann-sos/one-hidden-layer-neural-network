@@ -39,30 +39,32 @@ def generate_parameters(variables_number: int, hidden_neurons: int, output_neuro
     parameters['B_bias'] = initialise(output_neurons, 1)
     return parameters
 
-def forward_propagation(X, hidden_neurons, output_neurons, parameters):
-    A_layer = pd.DataFrame()
+def forward_propagation(
+    input_layer: pd.DataFrame, 
+    hidden_neurons: int, 
+    output_neurons: int, 
+    parameters: dict
+):
+    hidden_layer = pd.DataFrame()
+    output_layer = pd.DataFrame()
+
     def ifarray(x, i):
-        if not isinstance(x, np.ndarray):
-            return x
-        else:
-            return x[i]
+        if not isinstance(x, np.ndarray): return x
+        else: return x[i]
     def ifarray2(x, i):
-        if not isinstance(x, np.ndarray):
-            return x
-        else:
-            return x[i,:]
+        if not isinstance(x, np.ndarray): return x
+        else: return x[i,:]
     # initialize hidden layer dataframe
     for i in range(hidden_neurons):
-        A_layer = A_layer.assign(**{f"A{i+1}": np.ones(X.shape[0])})
+        hidden_layer = hidden_layer.assign(**{f"A{i+1}": np.ones(input_layer.shape[0])})
     for i in range(hidden_neurons):
-        A_layer[f"A{i+1}"] = sigmoid(sumator(X, ifarray2(parameters['A_weights'], i), ifarray(parameters['A_bias'], i))) 
+        hidden_layer[f"A{i+1}"] = sigmoid(sumator(input_layer, ifarray2(parameters['A_weights'], i), ifarray(parameters['A_bias'], i))) 
     # initialize output layer
-    B_layer = pd.DataFrame()
     for i in range(output_neurons):
-        B_layer = B_layer.assign(**{f"B{i+1}": np.ones(X.shape[0])})
+        output_layer = output_layer.assign(**{f"B{i+1}": np.ones(input_layer.shape[0])})
     for i in range(output_neurons):
-        B_layer[f"B{i+1}"] = sigmoid(sumator(A_layer, ifarray2(parameters['B_weights'], i), ifarray(parameters['B_bias'], i))) 
-    return B_layer
+        output_layer[f"B{i+1}"] = sigmoid(sumator(hidden_layer, ifarray2(parameters['B_weights'], i), ifarray(parameters['B_bias'], i))) 
+    return output_layer
 
 def backward_propagation(
     X: pd.DataFrame, 
