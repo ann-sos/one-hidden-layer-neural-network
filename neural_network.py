@@ -2,9 +2,6 @@ import numpy as np
 import pandas as pd
 import argparse
 
-
-
-
 def sumator(inputs, weights, bias):
     return (weights*inputs).sum(axis=1) + bias
 
@@ -69,10 +66,11 @@ def forward_propagation(
 
 def backward_propagation(layers: list, cost: float, parameters: dict):
     weights = parameters['weights']
+    learning_rate = 0.1
 
     for layer_idx in range(2, 0, -1):
         error_delta = cost * derivative_sigmoid(layers[layer_idx])
-        #update_weights here
+        weights[layer_idx - 1] += learning_rate * np.dot(np.transpose(layers[layer_idx - 1]), error_delta)
         cost = np.dot(error_delta, np.transpose(weights[layer_idx - 1]))
 
     return parameters
