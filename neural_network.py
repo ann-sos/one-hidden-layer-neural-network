@@ -1,5 +1,4 @@
 import numpy as np
-import argparse
 
 def sigmoid(x, Beta=1): return 1 / (1 + np.exp(-Beta * x))
 def derivative_sigmoid(x): return x * (1 - x)
@@ -12,13 +11,12 @@ def generate_parameters(variables_number: int, hidden_neurons: int, output_neuro
     return parameters
 
 def forward_propagation(input_layer: np.array, parameters: dict, hidden_neurons: int, output_neurons: int):
-    ho = np.dot(input_layer, parameters['weights'][0])
-    for i in range(hidden_neurons): ho[i] += parameters['bias'][0][i]
-    hidden_layer = sigmoid(ho)
+    h = np.dot(input_layer, parameters['weights'][0])
+    hidden_layer = sigmoid(h)
 
-    oo = np.dot(hidden_layer, parameters['weights'][1])
-    for i in range(output_neurons): oo[i] + parameters['bias'][1][i]
-    output_layer = sigmoid(oo)
+    o = np.dot(hidden_layer, parameters['weights'][1])
+    output_layer = sigmoid(o)
+
     return [input_layer, hidden_layer, output_layer]
 
 def backward_propagation(layers: list, cost: float, parameters: dict):
@@ -40,10 +38,20 @@ def train_neural_network(X: np.array, Y: np.array, epochs: int, hidden_neurons: 
         parameters = backward_propagation(layers, cost, parameters)
     return parameters
 
-X = np.array(([0, 0], [0, 1], [1, 0], [1, 1]), dtype=float)
-y = np.array(([0], [1], [1], [0]), dtype=float)
+X = np.array((
+    [7, 0.27, 0.36, 20.7, 0.045, 45, 170, 1.001, 3, 0.45, 8.8], 
+    [6.3, 0.3, 0.34, 1.6, 0.049, 14,132, 0.994, 3.3, 0.49, 9.5], 
+    [8.1, 0.28, 0.4, 6.9, 0.05, 30,97, 0.9951, 3.26, 0.44, 10.1],
+    [7.2, 0.23, 0.32, 8.5, 0.058, 47, 186, 0.9956, 3.19, 0.4, 9.9],
+    [7.2, 0.23, 0.32, 8.5, 0.058, 47, 186, 0.9956, 3.19, 0.4, 9.9],
+    [8.1, 0.28, 0.4, 6.9, 0.05, 30, 97, 0.9951, 3.26, 0.44, 10.1],
+    [6.2, 0.32, 0.16, 7, 0.045, 30, 136, 0.9949, 3.18, 0.47, 9.6]
+), dtype=float)
 
-a = train_neural_network(X, y, 10, 2, 2)
+y = np.array(([6], [6], [6], [6], [6], [6], [6]), dtype=float)
+col_count = np.shape(X)[1]
+
+a = train_neural_network(X, y, 10, col_count, col_count)
 print(a)
 '''
 if __name__ == "__main__":
