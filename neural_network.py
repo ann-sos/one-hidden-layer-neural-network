@@ -12,10 +12,10 @@ def sigmoid(x, Beta=1):
     "Activation function"
     return 1/(1 + np.exp(- Beta * x))
 
-def sigmoid_prime(self, z):
-    return sigmoid(z)*(1-sigmoid(z))
+def derivative_sigmoid(x):
+    return x * (1 - x)
 
-def cost_function(Y_predicted, Y_expected):
+def cost_function(Y_predicted: pd.DataFrame, Y_expected: pd.DataFrame):
     """MSE= Mean Squared error"""
     return 1 / Y_expected.shape[0] * np.sum((Y_predicted - Y_expected) ** 2)
     
@@ -28,15 +28,11 @@ def proportion_split_dataset(dataset: pd.DataFrame, proportion: float):
 def generate_parameters(variables_number: int, hidden_neurons: int, output_neurons: int) -> dict:
     def initialise(x, y):
         # returns numpy array of ones
-        if x > 1:
-            return np.ones([x, y])
-        else: 
-            return 1
+        if x > 1: return np.ones([x, y])
+        else: return 1
     parameters = {}
-    parameters['A_weights'] = initialise(hidden_neurons, variables_number)
-    parameters['B_weights'] = initialise(output_neurons, hidden_neurons)
-    parameters['A_bias'] = initialise(hidden_neurons, 1)
-    parameters['B_bias'] = initialise(output_neurons, 1)
+    parameters['weights'] = [initialise(hidden_neurons, variables_number), initialise(output_neurons, hidden_neurons)] #input layer and hidden layer
+    parameters['bias'] = [initialise(hidden_neurons, 1), initialise(output_neurons, 1)]
     return parameters
 
 def forward_propagation(
@@ -58,43 +54,37 @@ def forward_propagation(
     for i in range(hidden_neurons):
         hidden_layer = hidden_layer.assign(**{f"A{i+1}": np.ones(input_layer.shape[0])})
     for i in range(hidden_neurons):
-        hidden_layer[f"A{i+1}"] = sigmoid(sumator(input_layer, ifarray2(parameters['A_weights'], i), ifarray(parameters['A_bias'], i))) 
+        hidden_layer[f"A{i+1}"] = sigmoid(sumator(input_layer, ifarray2(parameters['weights'][0], i), ifarray(parameters['bias'][0], i))) 
     # initialize output layer
     for i in range(output_neurons):
         output_layer = output_layer.assign(**{f"B{i+1}": np.ones(input_layer.shape[0])})
     for i in range(output_neurons):
-        output_layer[f"B{i+1}"] = sigmoid(sumator(hidden_layer, ifarray2(parameters['B_weights'], i), ifarray(parameters['B_bias'], i))) 
-    return output_layer
-
-def backward_propagation(
-    X: pd.DataFrame, 
-    Y: pd.DataFrame, 
-    neurons: int,
-    errors: list,
-    inputs: list,
-    outputs: pd.DataFrame, 
-    weights: list
-):
-    errors[neurons-1] = outputs[neurons-1] - Y
-
-    for i in range(neurons-2, 0, -1):
-        errors[i] = np.dot(errors[i+1], weights[i][:,1:]) * sigmoid_prime(inputs[i])
+        output_layer[f"B{i+1}"] = sigmoid(sumator(hidden_layer, ifarray2(parameters['weights'][1], i), ifarray(parameters['bias'][1], i))) 
     
-    for i in range(0, neurons-1):
-        grad = np.dot(np.transpose(errors[i+1]), outputs[i]) / X.shape[0]
-        weights[i] = weights[i] - 0.2 * grad
-    
-    return weights
+    return [
+        input_layer, 
+        hidden_layer,
+        output_layer, 
+    ]
+
+def backward_propagation(layers: list, cost: float, parameters: dict):
+    weights = parameters['weights']
+
+    for layer_idx in range(2, 0, -1):
+        error_delta = cost * derivative_sigmoid(layers[layer_idx])
+        #update_weights here
+        cost = np.dot(error_delta, np.transpose(weights[layer_idx - 1]))
+
+    return parameters
+
 
 def train_neural_network(X: pd.DataFrame, Y: pd.DataFrame, epochs: int, hidden_neurons: int, output_neurons: int):
     parameters = generate_parameters(X.shape[1], hidden_neurons, output_neurons)
-    # errors = []
-    # for layer in range(neurons):
-        # errors.append(np.empty([X.shape[0], neurons[layer]]))
-    for i in range(epochs):
-        Y_predicted = forward_propagation(X, hidden_neurons, output_neurons, parameters)
-        cost = cost_function(Y_predicted.squeeze(), Y)
-        # parameters = backward_propagation(X, Y, Y_predicted, cost, parameters)
+    for epoch in range(epochs):
+        layers = forward_propagation(X, hidden_neurons, output_neurons, parameters)
+        output_layer = layers[2]
+        cost = cost_function(output_layer.squeeze(), Y)
+        parameters = backward_propagation(layers, cost, parameters)
     return parameters
 
 
