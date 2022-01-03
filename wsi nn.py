@@ -1,108 +1,40 @@
 import numpy as np
-import pandas as pd
-import argparse
 
-
-
-
-def sumator(inputs, weights, bias):
-    return (weights*inputs).sum(axis=1) + bias
-
-def sigmoid(x, Beta=1):
-    "Activation function"
-    return 1/(1 + np.exp(- Beta * x))
-
-def sigmoid_prime(self, z):
-    return sigmoid(z)*(1-sigmoid(z))
-
-def cost_function(Y_predicted, Y_expected):
-    """MSE= Mean Squared error"""
-    return 1 / Y_expected.shape[0] * np.sum((Y_predicted - Y_expected) ** 2)
+def sigmoid(x, Beta=1): return 1 / (1 + np.exp(-Beta * x))
+def derivative_sigmoid(x): return x * (1 - x)
+def cost_function(Y_predicted, Y_expected): return 1 / np.shape(Y_expected)[0] * np.sum((Y_predicted - Y_expected) ** 2)
     
-def proportion_split_dataset(dataset: pd.DataFrame, proportion: float):
-    # split dataset into training and testing set
-    training_df = dataset.sample(frac=proportion)
-    testing_df = dataset.drop(training_df.index)
-    return training_df, testing_df
-
 def generate_parameters(variables_number: int, hidden_neurons: int, output_neurons: int) -> dict:
-    def initialise(x, y):
-        # returns numpy array of ones
-        if x > 1:
-            return np.ones([x, y])
-        else: 
-            return 1
     parameters = {}
-    parameters['A_weights'] = initialise(hidden_neurons, variables_number)
-    parameters['B_weights'] = initialise(output_neurons, hidden_neurons)
-    parameters['A_bias'] = initialise(hidden_neurons, 1)
-    parameters['B_bias'] = initialise(output_neurons, 1)
+    parameters['weights'] = [np.ones([variables_number, hidden_neurons]), np.ones([hidden_neurons, output_neurons])]
+    parameters['bias'] = [np.ones([1, hidden_neurons]), np.ones([1, output_neurons])]
     return parameters
 
-def forward_propagation(X, hidden_neurons, output_neurons, parameters):
-    A_layer = pd.DataFrame()
-    def ifarray(x, i):
-        if not isinstance(x, np.ndarray):
-            return x
-        else:
-            return x[i]
-    def ifarray2(x, i):
-        if not isinstance(x, np.ndarray):
-            return x
-        else:
-            return x[i,:]
-    # initialize hidden layer dataframe
-    for i in range(hidden_neurons):
-        A_layer = A_layer.assign(**{f"A{i+1}": np.ones(X.shape[0])})
-    for i in range(hidden_neurons):
-        A_layer[f"A{i+1}"] = sigmoid(sumator(X, ifarray2(parameters['A_weights'], i), ifarray(parameters['A_bias'], i))) 
-    # initialize output layer
-    B_layer = pd.DataFrame()
-    for i in range(output_neurons):
-        B_layer = B_layer.assign(**{f"B{i+1}": np.ones(X.shape[0])})
-    for i in range(output_neurons):
-        B_layer[f"B{i+1}"] = sigmoid(sumator(A_layer, ifarray2(parameters['B_weights'], i), ifarray(parameters['B_bias'], i))) 
-    return B_layer
+def forward_propagation(input_layer: np.array, parameters: dict):
+    hidden_layer = sigmoid(np.dot(input_layer, parameters['weights'][0]) + parameters['bias'][0])
+    output_layer = sigmoid(np.dot(hidden_layer, parameters['weights'][1]) + parameters['bias'][1])
+    return [input_layer, hidden_layer, output_layer]
 
-def backward_propagation(
-    X: pd.DataFrame, 
-    Y: pd.DataFrame, 
-    neurons: int,
-    errors: list,
-    inputs: list,
-    outputs: pd.DataFrame, 
-    weights: list
-):
-    errors[neurons-1] = outputs[neurons-1] - Y
+def backward_propagation(layers: list, cost: float, parameters: dict):
+    weights = parameters['weights']
+    learning_rate = 0.1
 
-    for i in range(neurons-2, 0, -1):
-        errors[i] = np.dot(errors[i+1], weights[i][:,1:]) * sigmoid_prime(inputs[i])
-    
-    for i in range(0, neurons-1):
-        grad = np.dot(np.transpose(errors[i+1]), outputs[i]) / X.shape[0]
-        weights[i] = weights[i] - 0.2 * grad
-    
-    return weights
-
-def train_neural_network(X: pd.DataFrame, Y: pd.DataFrame, epochs: int, hidden_neurons: int, output_neurons: int):
-    parameters = generate_parameters(X.shape[1], hidden_neurons, output_neurons)
-    # errors = []
-    # for layer in range(neurons):
-        # errors.append(np.empty([X.shape[0], neurons[layer]]))
-    for i in range(epochs):
-        Y_predicted = forward_propagation(X, hidden_neurons, output_neurons, parameters)
-        cost = cost_function(Y_predicted.squeeze(), Y)
-        # parameters = backward_propagation(X, Y, Y_predicted, cost, parameters)
+    for layer_idx in range(2, 0, -1):
+        error_delta = cost * derivative_sigmoid(layers[layer_idx])
+        weights[layer_idx - 1] += learning_rate * np.dot(np.transpose(layers[layer_idx - 1]), error_delta)
+        cost = np.dot(error_delta, np.transpose(weights[layer_idx - 1]))
     return parameters
 
-def SGD_training(training_data, nb_epochs, learning_rate, hidden_neurons: int, output_neurons: int, X: pd.DataFrame, Y: pd.DataFrame):
-    params = generate_parameters(X.shape[1], hidden_neurons, output_neurons)
-    for i in range(nb_epochs):
-        for example in training_data:
-            params_grad = evaluate_gradient(loss_function, example, params)
-            params = params - learning_rate * params_grad
-    return params
+def train_neural_network(X: np.array, Y: np.array, epochs: int, hidden_neurons: int, output_neurons: int):
+    parameters = generate_parameters(np.shape(X)[1], hidden_neurons, output_neurons)
+    for epoch in range(epochs):
+        layers = forward_propagation(X, parameters)
+        output_layer = layers[2]
+        cost = cost_function(np.squeeze(output_layer), Y)
+        parameters = backward_propagation(layers, cost, parameters)
+    return parameters
 
+'''
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Neural network implementation.")
     parser.add_argument("-f", "--file", required=True, help="path to the file containing dataset")
@@ -110,3 +42,22 @@ if __name__ == "__main__":
     parser.add_argument("-hd", "--hidden", type=int, help="number of hidden neurons", required=True)
     parser.add_argument("-o", "--output", type=int, help="number of output neurons", required=True)
     args = vars(parser.parse_args())
+'''
+
+def evaluate():
+    file = open("winequality-white.csv")
+    data = np.loadtxt(file, delimiter=';', skiprows=1)
+    test_X = data[:1959,:-1]
+    test_y = data[:1959,-1]
+    train_X = data[1959:,:-1]
+    train_y = data[1959:,-1]
+    col_count = np.shape(train_X)[1]
+    test_y = np.expand_dims(test_y, -1)
+    train_y = np.expand_dims(train_y, -1)
+    nn_trained = train_neural_network (train_X, train_y, 10, col_count, col_count)
+    # walidacja
+    class_val = forward_propagation(test_X, nn_trained)[2]
+    print(class_val)
+    return 1
+
+evaluate()
