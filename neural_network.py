@@ -65,7 +65,6 @@ def evaluate():
     train_y = np.expand_dims(train_y, -1)
     nn_trained = train_neural_network(train_X, train_y, 10, col_count, col_count)
     print(nn_trained)
-    # walidacja
     class_val = forward_propagation(test_X, nn_trained)[2]
     print()
     print(class_val[2])
