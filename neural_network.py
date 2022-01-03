@@ -7,16 +7,12 @@ def cost_function(Y_predicted, Y_expected): return 1 / np.shape(Y_expected)[0] *
 def generate_parameters(variables_number: int, hidden_neurons: int, output_neurons: int) -> dict:
     parameters = {}
     parameters['weights'] = [np.ones([variables_number, hidden_neurons]), np.ones([hidden_neurons, output_neurons])]
-    parameters['bias'] = [np.ones([hidden_neurons, 1]), np.ones([output_neurons, 1])]
+    parameters['bias'] = [np.ones([1, hidden_neurons]), np.ones([1, output_neurons])]
     return parameters
 
-def forward_propagation(input_layer: np.array, parameters: dict, hidden_neurons: int, output_neurons: int):
-    h = np.dot(input_layer, parameters['weights'][0])
-    hidden_layer = sigmoid(h)
-
-    o = np.dot(hidden_layer, parameters['weights'][1])
-    output_layer = sigmoid(o)
-
+def forward_propagation(input_layer: np.array, parameters: dict):
+    hidden_layer = sigmoid(np.dot(input_layer, parameters['weights'][0]) + parameters['bias'][0])
+    output_layer = sigmoid(np.dot(hidden_layer, parameters['weights'][1]) + parameters['bias'][1])
     return [input_layer, hidden_layer, output_layer]
 
 def backward_propagation(layers: list, cost: float, parameters: dict):
