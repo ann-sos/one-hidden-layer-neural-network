@@ -25,6 +25,7 @@ def backward_propagation(layers: list, cost: float, parameters: dict):
     for layer_idx in range(2, 0, -1):
         error_delta = cost * derivative_sigmoid(layers[layer_idx])
         parameters['weights'][layer_idx - 1] += learning_rate * np.dot(np.transpose(layers[layer_idx - 1]), error_delta)
+        # parameters['biases'][layer_idx - 1] = derivative_sigmoid(layers[layer_idx])
         cost = np.dot(error_delta, np.transpose(parameters['weights'][layer_idx - 1]))
     return parameters
 
@@ -35,8 +36,6 @@ def train_neural_network(X: np.array, Y: np.array, epochs: int, hidden_neurons: 
         output_layer = layers[2]
         cost = cost_function(np.squeeze(output_layer), Y)
         parameters = backward_propagation(layers, cost, parameters)
-        print(parameters['weights'])
-        print()
     return parameters
 
 '''
@@ -63,11 +62,8 @@ def evaluate():
     col_count = np.shape(train_X)[1]
     test_y = np.expand_dims(test_y, -1)
     train_y = np.expand_dims(train_y, -1)
-    nn_trained = train_neural_network(train_X, train_y, 10, col_count, col_count)
-    print(nn_trained)
+    nn_trained = train_neural_network(train_X, train_y, 10, 2, 3)
     class_val = forward_propagation(test_X, nn_trained)[2]
-    print()
-    print(class_val[2])
     return 1
 
 evaluate()
