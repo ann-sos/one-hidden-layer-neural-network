@@ -6,7 +6,7 @@ def cost_function(Y_predicted, Y_expected): return 1 / np.shape(Y_expected)[0] *
     
 def generate_parameters(variables_number: int, hidden_neurons: int, output_neurons: int) -> dict:
     parameters = {}
-    parameters['weights'] = [np.ones([hidden_neurons, variables_number]), np.ones([output_neurons, hidden_neurons])]
+    parameters['weights'] = [np.ones([variables_number, hidden_neurons]), np.ones([hidden_neurons, output_neurons])]
     parameters['bias'] = [np.ones([hidden_neurons, 1]), np.ones([output_neurons, 1])]
     return parameters
 
@@ -51,7 +51,7 @@ X = np.array((
 y = np.array(([6], [6], [6], [6], [6], [6], [6]), dtype=float)
 col_count = np.shape(X)[1]
 
-a = train_neural_network(X, y, 10, col_count, col_count)
+a = train_neural_network(X, y, 10, 8, 1)
 print(a)
 '''
 if __name__ == "__main__":
