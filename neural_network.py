@@ -25,7 +25,7 @@ def backward_propagation(layers: list, cost: float, parameters: dict):
     for layer_idx in range(2, 0, -1):
         error_delta = cost * derivative_sigmoid(layers[layer_idx])
         parameters['weights'][layer_idx - 1] += learning_rate * np.dot(np.transpose(layers[layer_idx - 1]), error_delta)
-        # parameters['biases'][layer_idx - 1] = derivative_sigmoid(layers[layer_idx])
+        parameters['biases'][layer_idx - 1] += learning_rate * np.sum(error_delta, axis=0)
         cost = np.dot(error_delta, np.transpose(parameters['weights'][layer_idx - 1]))
     return parameters
 
