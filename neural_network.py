@@ -1,6 +1,11 @@
 import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
 
-def sigmoid(x): return 1 / (1 + np.exp(-x))
+
+def sigmoid(z):
+    z = np.clip(z, -500, 500)  # avoid overflow
+    return 1 / (1 + np.exp(-z))
 def derivative_sigmoid(x): return x * (1 - x)
 def cost_function(Y_predicted, Y_expected): return 1 / np.shape(Y_expected)[0] * np.sum((Y_predicted - Y_expected) ** 2)
 
@@ -33,40 +38,39 @@ def train_neural_network(X: np.array, Y: np.array, epochs: int, hidden_neurons: 
     parameters = generate_parameters(np.shape(X)[1], hidden_neurons, output_neurons)
     for epoch in range(epochs):
         layers = forward_propagation(X, parameters)
+        #print(f"Epoch: {epoch}\nHidden layer:\n{layers[1]}\nOutput layer:\n{layers[2]}\n")
         output_layer = layers[2]
         cost = cost_function(np.squeeze(output_layer), Y)
         parameters = backward_propagation(layers, cost, parameters)
+        #print(parameters)
     return parameters
 
-'''
-X = [
-    [7, 0.27, 0.36, 20.7, 0.045, 45, 170, 1.001, 3, 0.45, 8.8], 
-    [6.3, 0.3, 0.34, 1.6, 0.049, 14,132, 0.994, 3.3, 0.49, 9.5], 
-    [8.1, 0.28, 0.4, 6.9, 0.05, 30,97, 0.9951, 3.26, 0.44, 10.1],
-    [7.2, 0.23, 0.32, 8.5, 0.058, 47, 186, 0.9956, 3.19, 0.4, 9.9],
-    [7.2, 0.23, 0.32, 8.5, 0.058, 47, 186, 0.9956, 3.19, 0.4, 9.9],
-    [8.1, 0.28, 0.4, 6.9, 0.05, 30, 97, 0.9951, 3.26, 0.44, 10.1],
-    [6.2, 0.32, 0.16, 7, 0.045, 30, 136, 0.9949, 3.18, 0.47, 9.6]
-]
 
-y = np.array(([6], [6], [6], [6], [6], [6], [6]), dtype=float)
-'''
+def calculate_accuracy(x, y, parameters):
+    total = y.shape[0]
+    count = 0
+    for x, y in zip(x, y):
+        output = forward_propagation(x, parameters)[-1]
+        if output.argmax() == y.argmax():
+                count += 1
+        return count/total
 
 def evaluate():
-    file = open("winequality-white.csv")
-    data = np.loadtxt(file, delimiter=';', skiprows=1)
-    test_X = data[:1959,:-1]
-    test_y = data[:1959,-1]
-    train_X = data[1959:,:-1]
-    train_y = data[1959:,-1]
-    col_count = np.shape(train_X)[1]
-    test_y = np.expand_dims(test_y, -1)
-    train_y = np.expand_dims(train_y, -1)
-    nn_trained = train_neural_network(train_X, train_y, 10, 2, 3)
-    class_val = forward_propagation(test_X, nn_trained)[2]
-    return 1
+    # Import data
+    file = r'winequality-white.csv'
+    my_data = np.genfromtxt(file, delimiter=';')
+    my_data = my_data[2:,:] # drop headers
+    x = my_data[:,:-1]
+    y = my_data[:,-1]
+    #x = x / np.linalg.norm(x)
+    y = pd.get_dummies(y).to_numpy()
+    x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.1)
+    parameters = train_neural_network(x_train, y_train, 100, 21, 7)
+    # validate
+    accuracy = calculate_accuracy(x_val, y_val, parameters)
+    print(f"Accuracy: {accuracy * 100}")
 
-evaluate()
+print(evaluate())
 '''
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Neural network implementation.")
