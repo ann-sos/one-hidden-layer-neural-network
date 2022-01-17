@@ -59,7 +59,7 @@ def train_neural_network(X: np.array, Y: np.array, X_test: np.array, Y_test: np.
         if epoch % 10 == 0 and test_on_the_go:
             accuracy = calculate_accuracy(X_test, Y_test, parameters)
             accuracy_list.append(accuracy)
-            print(f"Epoch: {epoch} --- Accuracy: {accuracy*100:.2f}%")
+            print(f"Epoch: {epoch} --- Accuracy: {accuracy:.2f}%")
 
     return parameters, accuracy_list
 
@@ -71,7 +71,7 @@ def calculate_accuracy(X, Y, parameters):
         output = forward_propagation(x, parameters)[-1]
         if output.argmax() == y.argmax():
                 count += 1
-    return count/total
+    return count/total * 100
 
 def import_data(file):
     # Import data
@@ -79,7 +79,7 @@ def import_data(file):
     my_data = my_data[2:,:] # drop headers
     x = my_data[:,:-1]
     y = my_data[:,-1]
-    x = x / np.linalg.norm(x)
+    #x = x / np.linalg.norm(x)
     y = pd.get_dummies(y).to_numpy()
     x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.1)
     return x_train, x_val, y_train, y_val
@@ -96,7 +96,7 @@ def evaluate(file, learning_rate=0.01):
 #Test learning rate influence on accuracy
 x_train, x_val, y_train, y_val = import_data(r'winequality-white.csv')
 
-"""plt.figure(1)
+plt.figure(1)
 for learning_rate in [0.001, 0.01, 0.5]:
     parameters, accuracy_lst = train_neural_network(x_train, y_train, x_val, y_val, 200, 21, 7, learning_rate, test_on_the_go=True)
     plt.plot(np.arange(0, len(accuracy_lst)*10, 10), accuracy_lst, label=f"learning_rate={learning_rate}")
@@ -114,11 +114,11 @@ plt.title("Neural network")
 plt.xlabel("Epoch [-]")
 plt.ylabel("Accuracy [%]")
 plt.legend()
-plt.savefig("Neural_network_accuracy_epoch_hidden")"""
+plt.savefig("Neural_network_accuracy_epoch_hidden")
 
 
 plt.figure(3)
-parameters, accuracy_lst = train_neural_network(x_train, y_train, x_val, y_val, 1000, 21, 7, test_on_the_go=True)
+parameters, accuracy_lst = train_neural_network(x_train, y_train, x_val, y_val, 500, 21, 7, learning_rate=0.05, test_on_the_go=True)
 plt.plot(np.arange(0, len(accuracy_lst)*10, 10), accuracy_lst)
 plt.title("Neural network")
 plt.xlabel("Epoch [-]")
